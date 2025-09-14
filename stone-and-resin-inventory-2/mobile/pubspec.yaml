@@ -1,0 +1,30 @@
+name: stone_and_resin_inventory
+description: >-
+  A cross‑platform mobile application to manage tools and materials
+  using on‑device computer vision and simple data capture. This file
+  defines the dependencies required to run the Flutter app.
+
+# Prevent accidental publishing to pub.dev.
+publish_to: 'none'
+
+version: 0.1.0+1
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Camera plugin to access device cameras and stream preview frames.
+  camera: ^0.10.5+3
+  # Path provider used to store temporary files if needed in the future.
+  path_provider: ^2.0.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  # Linter for recommended best practices.
+  flutter_lints: ^2.0.1
+
+flutter:
+  uses-material-design: true
