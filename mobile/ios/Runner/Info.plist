@@ -1,1 +1,20 @@
-
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/mobile/ios/Runner/Info.plist b/mobile/ios/Runner/Info.plist
+index 8b137891791fe96927ad78e64b0aad7bded08bdc..d22c517c74b7e808cf536b9fe3d61facd4e0a522 100644
+--- a/mobile/ios/Runner/Info.plist
++++ b/mobile/ios/Runner/Info.plist
+@@ -1 +1,10 @@
+-
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++<plist version="1.0">
++<dict>
++    <key>CFBundleName</key>
++    <string>mobile</string>
++    <key>NSCameraUsageDescription</key>
++    <string>Used to scan inventory items</string>
++</dict>
++</plist>
+ 
+EOF
+)
