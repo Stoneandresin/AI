@@ -21,6 +21,13 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
+<<<<<<< HEAD
+=======
+  const MyApp({super.key, required this.cameras});
+
+  /// A list of cameras available on the device. Passed down to
+  /// screens that need camera access.
+>>>>>>> bcd9a4a (Initial import of Stone & Resin inventory app)
   final List<CameraDescription> cameras;
   const MyApp({super.key, required this.cameras});
 
@@ -35,6 +42,11 @@ class MyApp extends StatelessWidget {
 }
 
 class CameraScreen extends StatefulWidget {
+<<<<<<< HEAD
+=======
+  const CameraScreen({super.key, required this.cameras});
+
+>>>>>>> bcd9a4a (Initial import of Stone & Resin inventory app)
   final List<CameraDescription> cameras;
   const CameraScreen({super.key, required this.cameras});
 
