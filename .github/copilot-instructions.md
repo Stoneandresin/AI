@@ -53,10 +53,12 @@ Welcome to the Stone & Resin AI repository. This project is a cross-platform Flu
 
 ### Business Domain Guidelines
 - Our business involves tracking tools and materials for resin-bound surface installations
+- The app title should consistently be "Stone & Resin Inventory" (with spaces and ampersand)
 - Focus on offline-first functionality with eventual Firebase sync
-- Computer vision features should be optimized for on-device inference
+- Computer vision features should be optimized for on-device inference using TensorFlow Lite
 - Location tracking should respect user privacy and battery life
 - Inventory management should support barcode/QR scanning and manual entry
+- Use Material 3 design system with teal color scheme (`colorSchemeSeed: Colors.teal`)
 
 ### Code Quality
 - Use meaningful variable and function names
