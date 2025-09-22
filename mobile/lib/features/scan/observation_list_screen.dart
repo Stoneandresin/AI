@@ -100,4 +100,3 @@ class ObservationListScreen extends StatelessWidget {
     }
   }
 }
-}
