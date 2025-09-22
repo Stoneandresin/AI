@@ -7,6 +7,8 @@ import 'data/services/inventory_service.dart';
 import 'features/scan/observation_list_screen.dart';
 import 'features/scan/observation_input_dialog.dart';
 import 'features/inventory/inventory_screen.dart';
+import 'features/locations/locations_screen.dart';
+import 'features/jobs/jobs_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,7 +71,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: NavigationBar(
-        currentIndex: _currentIndex,
+        selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
