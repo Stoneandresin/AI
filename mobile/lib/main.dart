@@ -3,7 +3,10 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'data/models/observation.dart';
+import 'data/services/inventory_service.dart';
 import 'features/scan/observation_list_screen.dart';
+import 'features/scan/observation_input_dialog.dart';
+import 'features/inventory/inventory_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,34 +24,84 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-<<<<<<< HEAD
-=======
   const MyApp({super.key, required this.cameras});
 
   /// A list of cameras available on the device. Passed down to
   /// screens that need camera access.
->>>>>>> bcd9a4a (Initial import of Stone & Resin inventory app)
   final List<CameraDescription> cameras;
-  const MyApp({super.key, required this.cameras});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Stone & Resin Inventory',
       theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
-      home: CameraScreen(cameras: cameras),
+      home: MainScreen(cameras: cameras),
+    );
+  }
+}
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key, required this.cameras});
+
+  final List<CameraDescription> cameras;
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      CameraScreen(cameras: widget.cameras),
+      const InventoryScreen(),
+      const LocationsScreen(),
+      const JobsScreen(),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _pages[_currentIndex],
+      bottomNavigationBar: NavigationBar(
+        currentIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.camera_alt),
+            label: 'Scan',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.inventory),
+            label: 'Inventory',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.location_on),
+            label: 'Locations',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.work),
+            label: 'Jobs',
+          ),
+        ],
+      ),
     );
   }
 }
 
 class CameraScreen extends StatefulWidget {
-<<<<<<< HEAD
-=======
   const CameraScreen({super.key, required this.cameras});
 
->>>>>>> bcd9a4a (Initial import of Stone & Resin inventory app)
   final List<CameraDescription> cameras;
-  const CameraScreen({super.key, required this.cameras});
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -57,7 +110,7 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? _controller;
   late Future<void> _init;
-  final List<Observation> _observations = [];
+  final InventoryService _inventoryService = InventoryService();
 
   @override
   void initState() {
@@ -76,20 +129,24 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
-  void _logObservation() {
-    setState(() {
-      _observations.add(Observation(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        itemId: 'UNKNOWN',
-        locationId: null,
-        timestamp: DateTime.now(),
-        quantity: 1,
-        method: ObservationMethod.scan,
-      ));
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Observation logged')),
+  void _logObservation() async {
+    final observation = await showDialog<Observation>(
+      context: context,
+      builder: (context) => const ObservationInputDialog(),
     );
+    
+    if (observation != null) {
+      _inventoryService.addObservation(observation);
+      final item = _inventoryService.getItemById(observation.itemId);
+      final itemName = item?.name ?? 'Unknown Item';
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Logged ${observation.quantity}x $itemName'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   @override
@@ -102,7 +159,7 @@ class _CameraScreenState extends State<CameraScreen> {
             icon: const Icon(Icons.list_alt),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => ObservationListScreen(observations: _observations),
+                builder: (_) => ObservationListScreen(observations: _inventoryService.observations),
               ),
             ),
           ),
@@ -123,14 +180,52 @@ class _CameraScreenState extends State<CameraScreen> {
               CameraPreview(_controller!),
               CustomPaint(painter: CrosshairPainter()),
               Positioned(
-                left: 0, right: 0, bottom: 0,
+                left: 0, right: 0, bottom: 80,
                 child: Container(
-                  padding: const EdgeInsets.all(12),
-                  color: Colors.black45,
-                  child: const Text(
-                    'Center the tool/material in the crosshair, then tap Log.',
-                    style: TextStyle(color: Colors.white),
-                    textAlign: TextAlign.center,
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Center the tool/material in the crosshair, then tap Log.',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: _logObservation,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Log Item'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              // TODO: Add QR scan functionality
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('QR scan coming soon')),
+                              );
+                            },
+                            icon: const Icon(Icons.qr_code_scanner),
+                            label: const Text('QR Code'),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.white),
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -138,10 +233,71 @@ class _CameraScreenState extends State<CameraScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _logObservation,
-        icon: const Icon(Icons.add),
-        label: const Text('Log Item'),
+    );
+  }
+}
+
+/// Placeholder screen for locations management
+class LocationsScreen extends StatelessWidget {
+  const LocationsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Locations'),
+      ),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.location_on, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Location Management',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'GPS tracking and QR location labels\ncoming soon!',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Placeholder screen for jobs management
+class JobsScreen extends StatelessWidget {
+  const JobsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Jobs'),
+      ),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.work, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Job Management',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Track item check-ins and check-outs\nfor different job sites.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
     );
   }
