@@ -11,7 +11,8 @@ import 'package:flutter/foundation.dart';
 class Observation {
   final String id;
   final String itemId;
-  final String userId;
+  final String? userId;
+  final String? locationId;
   final DateTime timestamp;
   final int quantity;
   final double confidence;
@@ -21,14 +22,15 @@ class Observation {
   const Observation({
     required this.id,
     required this.itemId,
-    required this.userId,
+    this.userId,
+    this.locationId,
     required this.timestamp,
     required this.quantity,
-    required this.confidence,
+    this.confidence = 0.0,
     required this.method,
     this.notes = '',
   });
 }
 
 /// Enumerates the supported ways an [Observation] can be created.
-enum ObservationMethod { cv, qr, voice }
+enum ObservationMethod { scan, cv, qr, voice }
