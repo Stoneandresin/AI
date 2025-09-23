@@ -6,21 +6,44 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:camera/camera.dart';
+import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile/main.dart';
-import 'package:mobile/data/services/inventory_service.dart';
 import 'package:mobile/data/models/observation.dart';
+import 'package:mobile/data/services/inventory_service.dart';
+import 'package:mobile/main.dart';
+
+import 'fake_camera_platform.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  const CameraDescription testCamera = CameraDescription(
+    name: 'Test Camera',
+    lensDirection: CameraLensDirection.back,
+    sensorOrientation: 0,
+  );
+
+  late FakeCameraPlatform fakeCameraPlatform;
+
+  setUp(() {
+    fakeCameraPlatform = FakeCameraPlatform(
+      cameras: const <CameraDescription>[testCamera],
+    );
+    CameraPlatform.instance = fakeCameraPlatform;
+  });
+
+  tearDown(() async {
+    await fakeCameraPlatform.disposePlatform();
+  });
+
   group('Stone & Resin Inventory App Tests', () {
     testWidgets('Main app loads with bottom navigation',
         (WidgetTester tester) async {
-      await tester
-          .pumpWidget(const MyApp(cameras: <CameraDescription>[]));
-      await tester.pump();
+      await tester.pumpWidget(
+        MyApp(cameras: const <CameraDescription>[testCamera]),
+      );
+      await tester.pumpAndSettle();
 
       // Verify that we have a bottom navigation bar
       expect(find.byType(NavigationBar), findsOneWidget);
@@ -37,9 +60,10 @@ void main() {
 
     testWidgets('Can navigate to inventory screen',
         (WidgetTester tester) async {
-      await tester
-          .pumpWidget(const MyApp(cameras: <CameraDescription>[]));
-      await tester.pump();
+      await tester.pumpWidget(
+        MyApp(cameras: const <CameraDescription>[testCamera]),
+      );
+      await tester.pumpAndSettle();
 
       // Tap on Inventory tab
       await tester.tap(find.text('Inventory'));
@@ -62,11 +86,11 @@ void main() {
     testWidgets('Camera screen shows proper UI elements',
         (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(
-        home: CameraScreen(cameras: <CameraDescription>[]),
+        home: CameraScreen(cameras: <CameraDescription>[testCamera]),
       ));
 
-      // Allow the FutureBuilder to settle.
-      await tester.pump();
+      // Allow the FutureBuilder to settle after initialization.
+      await tester.pumpAndSettle();
 
       // Should show scan items title
       expect(find.text('Scan Items'), findsOneWidget);
@@ -77,11 +101,10 @@ void main() {
       // Should show QR code button
       expect(find.text('QR Code'), findsOneWidget);
 
-      // Should surface a friendly placeholder when no camera preview exists.
-      expect(
-        find.text('Camera preview unavailable on this device.'),
-        findsOneWidget,
-      );
+      // Should show the camera preview once initialization succeeds.
+      expect(find.byType(CameraPreview), findsOneWidget);
+      expect(find.text('Camera preview unavailable on this device.'),
+          findsNothing);
 
       // Dispose the camera screen to clean up the controller.
       await tester.pumpWidget(const SizedBox.shrink());
