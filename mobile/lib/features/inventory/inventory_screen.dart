@@ -60,6 +60,31 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   List<String> get _categories => _inventoryService.categories;
 
+  Future<void> _handleItemPersistence(Item item, bool isEditing) async {
+    if (isEditing) {
+      _inventoryService.updateItem(item);
+    } else {
+      _inventoryService.addItem(item);
+    }
+  }
+
+  Future<void> _openAddOrEditItem({Item? item}) async {
+    final result = await Navigator.of(context).push<Item>(
+      MaterialPageRoute(
+        builder: (_) => AddItemScreen(
+          item: item,
+          onSave: _handleItemPersistence,
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result != null) {
+      _filterItems();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,11 +93,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const AddItemScreen(),
-              ),
-            ),
+            onPressed: () {
+              _openAddOrEditItem();
+            },
           ),
         ],
       ),
@@ -217,6 +240,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _openAddOrEditItem(item: item);
+            },
+            child: const Text('Edit'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Close'),

@@ -13,6 +13,12 @@ import 'package:mobile/data/services/inventory_service.dart';
 import 'package:mobile/data/models/observation.dart';
 import 'package:mobile/features/inventory/inventory_screen.dart';
 
+Finder _textFieldByLabel(String label) {
+  return find.byWidgetPredicate(
+    (widget) => widget is TextFormField && widget.decoration?.labelText == label,
+  );
+}
+
 void main() {
   group('Stone & Resin Inventory App Tests', () {
     testWidgets('Main app loads with bottom navigation', (WidgetTester tester) async {
@@ -51,6 +57,35 @@ void main() {
       // Should see inventory screen
       expect(find.text('Inventory'), findsOneWidget);
       expect(find.text('Search items...'), findsOneWidget);
+    });
+
+    testWidgets('Adding a new item updates the inventory list', (WidgetTester tester) async {
+      const testItemName = 'Widget Test Hammer';
+      const testSku = 'WT-123';
+
+      addTearDown(() {
+        final service = InventoryService();
+        final match = service.items.where((item) => item.name == testItemName);
+        if (match.isNotEmpty) {
+          service.removeItem(match.first.id);
+        }
+      });
+
+      await tester.pumpWidget(const MaterialApp(home: InventoryScreen()));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(_textFieldByLabel('Item Name *'), testItemName);
+      await tester.enterText(_textFieldByLabel('SKU/Part Number *'), testSku);
+      await tester.enterText(_textFieldByLabel('Reorder Minimum *'), '7');
+
+      await tester.tap(find.text('Add Item'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(testItemName), findsOneWidget);
+      expect(find.textContaining(testSku), findsOneWidget);
     });
 
     testWidgets('Camera screen shows proper UI elements', (WidgetTester tester) async {
