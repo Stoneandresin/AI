@@ -1,6 +1,7 @@
-import 'dart:io' show Platform;
+import 'camera_initializer_stub.dart'
+    if (dart.library.io) 'camera_initializer_io.dart'
+    as cameraInitializer;
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'data/models/observation.dart';
 import 'data/services/inventory_service.dart';
@@ -12,7 +13,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   List<CameraDescription> cameras = const [];
-  if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+  if (cameraInitializer.shouldInitializeCamera) {
     try {
       cameras = await availableCameras();
     } catch (_) {
