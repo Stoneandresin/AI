@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import '../../data/models/item.dart';
 
 /// A screen for adding or editing inventory items.
+typedef ItemSaveCallback = Future<void> Function(Item item, bool isEditing);
+
 class AddItemScreen extends StatefulWidget {
   final Item? item;
-  
-  const AddItemScreen({super.key, this.item});
+  final ItemSaveCallback onSave;
+
+  const AddItemScreen({super.key, this.item, required this.onSave});
 
   @override
   State<AddItemScreen> createState() => _AddItemScreenState();
@@ -209,7 +212,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
-  void _saveItem() {
+  void _saveItem() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -225,7 +228,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
       imageRef: '',
     );
 
-    // TODO: Save to database
+    await widget.onSave(item, widget.item != null);
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(widget.item != null ? 'Item updated successfully' : 'Item added successfully'),
