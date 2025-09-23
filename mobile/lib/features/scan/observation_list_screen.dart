@@ -6,12 +6,13 @@ import '../../data/services/inventory_service.dart';
 class ObservationListScreen extends StatelessWidget {
   final List<Observation> observations;
 
-  const ObservationListScreen({Key? key, required this.observations}) : super(key: key);
+  const ObservationListScreen({Key? key, required this.observations})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final inventoryService = InventoryService();
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Observations'),
@@ -31,9 +32,10 @@ class ObservationListScreen extends StatelessWidget {
                 final item = inventoryService.getItemById(obs.itemId);
                 final itemName = item?.name ?? 'Unknown Item';
                 final itemSku = item?.sku ?? 'No SKU';
-                
+
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: _getMethodColor(obs.method),
@@ -47,14 +49,16 @@ class ObservationListScreen extends StatelessWidget {
                         Text('Method: ${obs.method.name}'),
                         Text('Time: ${_formatDateTime(obs.timestamp)}'),
                         if (obs.userId != null) Text('User: ${obs.userId}'),
-                        if (obs.locationId != null) Text('Location: ${obs.locationId}'),
+                        if (obs.locationId != null)
+                          Text('Location: ${obs.locationId}'),
                         if (obs.notes.isNotEmpty) Text('Notes: ${obs.notes}'),
                       ],
                     ),
                     trailing: obs.confidence > 0
                         ? Chip(
                             label: Text('${(obs.confidence * 100).toInt()}%'),
-                            backgroundColor: _getConfidenceColor(obs.confidence),
+                            backgroundColor:
+                                _getConfidenceColor(obs.confidence),
                           )
                         : Icon(_getMethodIcon(obs.method)),
                   ),

@@ -1,6 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'data/models/observation.dart';
 import 'data/services/inventory_service.dart';
@@ -69,7 +69,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: NavigationBar(
-        currentIndex: _currentIndex,
+        selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
@@ -116,8 +116,11 @@ class _CameraScreenState extends State<CameraScreen> {
   void initState() {
     super.initState();
     if (widget.cameras.isNotEmpty) {
-      _controller = CameraController(widget.cameras.first, ResolutionPreset.medium);
-      _init = _controller!.initialize();
+      _controller =
+          CameraController(widget.cameras.first, ResolutionPreset.medium);
+      _init = _controller!.initialize().catchError((Object error, _) {
+        debugPrint('Camera initialization failed: $error');
+      });
     } else {
       _init = Future.value();
     }
@@ -134,12 +137,12 @@ class _CameraScreenState extends State<CameraScreen> {
       context: context,
       builder: (context) => const ObservationInputDialog(),
     );
-    
+
     if (observation != null) {
       _inventoryService.addObservation(observation);
       final item = _inventoryService.getItemById(observation.itemId);
       final itemName = item?.name ?? 'Unknown Item';
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Logged ${observation.quantity}x $itemName'),
@@ -159,7 +162,8 @@ class _CameraScreenState extends State<CameraScreen> {
             icon: const Icon(Icons.list_alt),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => ObservationListScreen(observations: _inventoryService.observations),
+                builder: (_) => ObservationListScreen(
+                    observations: _inventoryService.observations),
               ),
             ),
           ),
@@ -171,16 +175,45 @@ class _CameraScreenState extends State<CameraScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (_controller == null || !_controller!.value.isInitialized) {
-            return const Center(child: Text('Camera not available on this platform.'));
-          }
+
+          final bool hasPreview =
+              _controller != null && _controller!.value.isInitialized;
+
           return Stack(
             fit: StackFit.expand,
             children: [
-              CameraPreview(_controller!),
+              hasPreview
+                  ? CameraPreview(_controller!)
+                  : const ColoredBox(color: Colors.black),
               CustomPaint(painter: CrosshairPainter()),
+              if (!hasPreview)
+                Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'Camera preview unavailable on this device.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Positioned(
-                left: 0, right: 0, bottom: 80,
+                left: 0,
+                right: 0,
+                bottom: 80,
                 child: Container(
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(16),
@@ -213,7 +246,8 @@ class _CameraScreenState extends State<CameraScreen> {
                             onPressed: () {
                               // TODO: Add QR scan functionality
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('QR scan coming soon')),
+                                const SnackBar(
+                                    content: Text('QR scan coming soon')),
                               );
                             },
                             icon: const Icon(Icons.qr_code_scanner),
@@ -321,13 +355,13 @@ class CrosshairPainter extends CustomPainter {
 
     const tick = 18.0;
     canvas.drawLine(Offset(rect.center.dx, rect.top),
-                    Offset(rect.center.dx, rect.top + tick), p);
+        Offset(rect.center.dx, rect.top + tick), p);
     canvas.drawLine(Offset(rect.center.dx, rect.bottom - tick),
-                    Offset(rect.center.dx, rect.bottom), p);
+        Offset(rect.center.dx, rect.bottom), p);
     canvas.drawLine(Offset(rect.left, rect.center.dy),
-                    Offset(rect.left + tick, rect.center.dy), p);
+        Offset(rect.left + tick, rect.center.dy), p);
     canvas.drawLine(Offset(rect.right - tick, rect.center.dy),
-                    Offset(rect.right, rect.center.dy), p);
+        Offset(rect.right, rect.center.dy), p);
   }
 
   @override
